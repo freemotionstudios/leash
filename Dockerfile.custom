@@ -1,0 +1,88 @@
+# syntax=docker/dockerfile:1.7
+# Custom Leash Image with additional tools and non-root user support
+#
+# This Dockerfile extends the base leash image to:
+# 1. Install additional tools after base image settings are applied
+# 2. Run as a non-root user for improved security
+#
+# Build with: make docker-custom
+# Or: ./build/build-custom-image.sh
+
+ARG BASE_LEASH_IMAGE=leash/runtime-base:latest
+ARG LEASH_VERSION=dev
+ARG CUSTOM_USER=leash
+ARG CUSTOM_UID=1000
+ARG CUSTOM_GID=1000
+
+# Start from the base leash runtime image
+FROM ${BASE_LEASH_IMAGE} AS custom-base
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG CUSTOM_USER
+ARG CUSTOM_UID
+ARG CUSTOM_GID
+
+# Install additional tools that users might need
+# This can be customized based on your requirements
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Additional networking tools
+    nmap \
+    netstat-nat \
+    socat \
+    # Additional debugging tools
+    strace \
+    ltrace \
+    gdb \
+    # Additional development tools
+    git \
+    jq \
+    python3 \
+    python3-pip \
+    # Additional file utilities
+    tree \
+    unzip \
+    zip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user for running the leash process
+# Note: The leash daemon still needs certain capabilities, so we'll use
+# setcap to grant specific capabilities to the binary
+RUN groupadd -g ${CUSTOM_GID} ${CUSTOM_USER} && \
+    useradd -u ${CUSTOM_UID} -g ${CUSTOM_GID} -m -s /bin/bash ${CUSTOM_USER}
+
+# Ensure directories have proper permissions for non-root user
+RUN chown -R ${CUSTOM_USER}:${CUSTOM_USER} /log /cfg /leash && \
+    chmod 755 /log /cfg /leash
+
+# Copy the leash binaries from the build stage
+# These will be copied in the final stage below
+FROM custom-base AS custom-final
+
+ARG VERSION=dev
+ARG COMMIT=dev
+ARG BUILD_DATE=unknown
+ARG CHANNEL=main
+ARG GIT_REMOTE_URL=unknown
+ARG CUSTOM_USER
+ARG CUSTOM_UID
+ARG CUSTOM_GID
+
+LABEL org.opencontainers.image.version="v${VERSION}" \
+      org.opencontainers.image.revision="${COMMIT}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.source="${GIT_REMOTE_URL}" \
+      org.opencontainers.image.ref.name="${CHANNEL}" \
+      org.opencontainers.image.description="Custom Leash image with additional tools and non-root user"
+
+# Set environment variables for the custom user
+ENV LEASH_USER=${CUSTOM_USER} \
+    LEASH_UID=${CUSTOM_UID} \
+    LEASH_GID=${CUSTOM_GID}
+
+# Note: We don't set USER here because the leash daemon needs to run with
+# specific capabilities. The actual user context will be managed by the
+# container runtime with appropriate capability grants.
+# When running, use: docker run --cap-add=... --user ${CUSTOM_UID}:${CUSTOM_GID}
+
+# Preserve the original entrypoint
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/leash", "--daemon"]

@@ -209,6 +209,14 @@ docker-coder: precommit ## Build the coder docker image (includes all common cod
 .PHONY: docker
 docker: docker-leash docker-coder ## Build all project docker images
 
+.PHONY: docker-custom
+docker-custom: precommit docker-base ## Build custom leash image with additional tools and non-root user
+	@echo 'building custom leash image'
+	@./build/build-custom-image.sh
+
+.PHONY: docker-all
+docker-all: docker docker-custom ## Build all docker images including custom leash image
+
 .PHONY: dev-ui
 dev-ui: ## Start a development Control UI instance (ws:// points at: 127.0.0.1:18000)
 	@cd controlui && make dev
