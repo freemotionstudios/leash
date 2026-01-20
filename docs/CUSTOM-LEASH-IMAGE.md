@@ -236,6 +236,6 @@ If custom tools aren't available in the container:
 
 ## See Also
 
-- [CUSTOM-DOCKER-IMAGES.md](CUSTOM-DOCKER-IMAGES.md) - Guide for customizing the target (coder) image
+- [CUSTOM-DOCKER-IMAGES.md](CUSTOM-DOCKER-IMAGES.md) - Guide for customizing the **target/coder image** (the container where AI agents run). Use this if you want to customize the agent execution environment rather than the leash manager.
 - [CONFIG.md](CONFIG.md) - Configuration file documentation
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Development setup and guidelines

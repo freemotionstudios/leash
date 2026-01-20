@@ -219,8 +219,10 @@ main() {
         log_info "Base image ${BASE_IMAGE} not found locally"
         
         # Check if it's a local base image that needs to be built
-        if [[ "${BASE_IMAGE}" == "leash/runtime-base:latest" ]]; then
-            log_info "Building leash/runtime-base:latest..."
+        # This matches the default base image name from the Makefile
+        local default_base_image="leash/runtime-base:latest"
+        if [[ "${BASE_IMAGE}" == "${default_base_image}" ]]; then
+            log_info "Building ${default_base_image}..."
             make -C "${REPO_ROOT}" docker-base
         else
             die "Base image ${BASE_IMAGE} not found. Please build or pull it first."
@@ -245,7 +247,7 @@ main() {
         --build-arg CUSTOM_USER="${CUSTOM_USER}" \
         --build-arg CUSTOM_UID="${CUSTOM_UID}" \
         --build-arg CUSTOM_GID="${CUSTOM_GID}" \
-        --build-arg VERSION="${version#v}" \
+        --build-arg VERSION="${version#v}" \  # Strip 'v' prefix for semantic version
         --build-arg COMMIT="${commit}" \
         --build-arg BUILD_DATE="${build_date}" \
         --build-arg CHANNEL="${channel}" \

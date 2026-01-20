@@ -9,7 +9,6 @@
 # Or: ./build/build-custom-image.sh
 
 ARG BASE_LEASH_IMAGE=leash/runtime-base:latest
-ARG LEASH_VERSION=dev
 ARG CUSTOM_USER=leash
 ARG CUSTOM_UID=1000
 ARG CUSTOM_GID=1000
